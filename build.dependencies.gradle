@@ -1,6 +1,10 @@
 repositories {
     mavenCentral()
     google() // Needed for androidx
+    maven { url = 'https://maven.brott.dev/' }
+    maven { url= 'https://maven.pedropathing.com/' }
+    maven { url = 'https://repo.nicevape.lol/output/' }
+    maven { url = "https://mymaven.bylazar.com/releases" }
 }
 
 dependencies {
@@ -13,5 +17,11 @@ dependencies {
     implementation 'org.firstinspires.ftc:FtcCommon:10.2.0'
     implementation 'org.firstinspires.ftc:Vision:10.2.0'
     implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'org.ftclib.ftclib:core:2.1.1' // ftclib
+    implementation 'com.pedropathing:ftclib:1.0.7' // pedropathing ftclib
+    implementation 'com.pedropathing:pedro:1.0.9' // pedropathing
+    implementation 'com.acmerobotics.dashboard:dashboard:0.4.16' // ftc dashboard
+    implementation 'xyz.nin1275:metrolib:1.0.9' // MetroLib
+    implementation "com.bylazar:ftcontrol:0.2.1" // ftcontrol
 }
 

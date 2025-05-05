@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 
 @TeleOp
 
-public class MainV1 extends LinearOpMode {
+public class MainV1_test extends LinearOpMode {
     private DcMotor arm;
     private Blinker control_Hub;
     private Blinker expansion_Hub_2;
@@ -62,17 +62,11 @@ public class MainV1 extends LinearOpMode {
                 } else {
                     arm.setPower(0);
                 }
+                //claw
                 if (gamepad1.right_bumper) {
                     clawL.setPower(1);
                     clawR.setPower(1);
-                } else if (gamepad1.left_bumper) {
-                    clawL.setPower(-1);
-                    clawR.setPower(-1);
                 } else {
-                    clawL.setPower(0);
-                    clawR.setPower(0);
-                }
-                if (gamepad1.left_bumper & gamepad1.right_bumper) {
                     clawL.setPower(0);
                     clawR.setPower(0);
                 }

@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -7,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Blinker;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import xyz.nin1275.constants.PIDFKCoefficients;
@@ -14,7 +16,7 @@ import xyz.nin1275.controllers.PID;
 import xyz.nin1275.subsystems.SlidesSS;
 
 @TeleOp
-
+@Config
 public class MainV1 extends LinearOpMode {
     private DcMotor arm;
     private Blinker control_Hub;
@@ -33,12 +35,7 @@ public class MainV1 extends LinearOpMode {
             0,
             0.08
     );
-    public static PIDFKCoefficients taPID = new PIDFKCoefficients(
-            0.03,
-            0,
-            0,
-            0.18
-    );
+    public static double taFF = 0.18;
     public static double CPR = 537.7; // counts per revolution
     public static double INCHES_PER_REV = 16; // how far the arm travels linearly per motor revolution
 
@@ -56,11 +53,11 @@ public class MainV1 extends LinearOpMode {
         CRServo clawR = hardwareMap.get(CRServo.class, "clawR");
         chassisBL.setDirection(DcMotor.Direction.REVERSE);
         chassisFL.setDirection(DcMotor.Direction.REVERSE);
+        extendArm.setDirection(DcMotorSimple.Direction.REVERSE);
+        arm.setDirection(DcMotorSimple.Direction.REVERSE);
         clawL.setDirection(CRServo.Direction.REVERSE);
         PID eaController = new PID(Math.sqrt(eaPID.P), eaPID.I, eaPID.D);
-        PID taController = new PID(Math.sqrt(taPID.P), taPID.I, taPID.D);
         SlidesSS sliders = new SlidesSS(extendArm, eaController, 0, eaPID.F, CPR, INCHES_PER_REV, true);
-        SlidesSS armSS = new SlidesSS(arm, taController, 0, taPID.F, CPR, INCHES_PER_REV, true);
 
         // init
         waitForStart();
@@ -82,7 +79,14 @@ public class MainV1 extends LinearOpMode {
                 chassisFR.setPower(chassisFRPower);
                 chassisBR.setPower(chassisBRPower);
                 sliders.update(gamepad1.dpad_up, gamepad1.dpad_down);
-                armSS.update(gamepad1.right_stick_y > 0.3, gamepad1.right_stick_y < 0.3);
+                if (gamepad1.right_stick_y > 0.1) {
+                    arm.setPower(taFF + gamepad1.right_stick_y);
+                } else if (gamepad1.right_stick_y < 0.1) {
+                    arm.setPower(gamepad1.right_stick_y);
+                } else {
+                    double taFf = Math.cos(Math.toRadians(arm.getCurrentPosition()/CPR) + Math.cos(Math.toRadians(arm.getCurrentPosition()/CPR))) * taFF;
+                    arm.setPower(taFf);
+                }
                 if (gamepad1.right_bumper) {
                     clawL.setPower(1);
                     clawR.setPower(1);
@@ -90,10 +94,6 @@ public class MainV1 extends LinearOpMode {
                     clawL.setPower(-1);
                     clawR.setPower(-1);
                 } else {
-                    clawL.setPower(0);
-                    clawR.setPower(0);
-                }
-                if (gamepad1.left_bumper & gamepad1.right_bumper) {
                     clawL.setPower(0);
                     clawR.setPower(0);
                 }

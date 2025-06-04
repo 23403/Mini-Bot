@@ -77,7 +77,7 @@ public class MainV1 extends LinearOpMode {
                     eaCpos = extendArm.getCurrentPosition();
                 } else if (gamepad2.dpad_down) {
                     extendArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    extendArm.setPower(eaSpeed);
+                    extendArm.setPower(-eaSpeed);
                     eaCpos = extendArm.getCurrentPosition();
                 } else {
                     extendArm.setPower(eaFF);

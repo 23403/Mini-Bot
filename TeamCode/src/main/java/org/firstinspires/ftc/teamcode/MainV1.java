@@ -1,43 +1,22 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.Blinker;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.IMU;
-
-import xyz.nin1275.constants.PIDFKCoefficients;
-import xyz.nin1275.controllers.PID;
-import xyz.nin1275.subsystems.SlidesSS;
 
 @TeleOp
 @Config
 public class MainV1 extends LinearOpMode {
-    private DcMotor arm;
-    private Blinker control_Hub;
-    private Blinker expansion_Hub_2;
-    private DcMotor extend;
-    private DcMotor chassisBL;
-    private DcMotor chassisBR;
-    private DcMotor chassisFL;
-    private DcMotor chassisFR;
-    private CRServo clawL;
-    private CRServo clawR;
-    private IMU imu;
-    public static PIDFKCoefficients eaPID = new PIDFKCoefficients(
-            0.02,
-            0,
-            0,
-            0.08
-    );
     public static double taFF = 0.18;
-    public static double CPR = 537.7; // counts per revolution
-    public static double INCHES_PER_REV = 16; // how far the arm travels linearly per motor revolution
+    public static double eaFF = 0.18;
+    public static int taCpos = 0;
+    public static int eaCpos = 0;
+    public static double DEADZONE = 0;
+    public static double eaSpeed = 0.8;
 
     // todo: write your code here
     @Override
@@ -56,9 +35,8 @@ public class MainV1 extends LinearOpMode {
         extendArm.setDirection(DcMotorSimple.Direction.REVERSE);
         arm.setDirection(DcMotorSimple.Direction.REVERSE);
         clawL.setDirection(CRServo.Direction.REVERSE);
-        PID eaController = new PID(Math.sqrt(eaPID.P), eaPID.I, eaPID.D);
-        SlidesSS sliders = new SlidesSS(extendArm, eaController, 0, eaPID.F, CPR, INCHES_PER_REV, true);
-
+        extendArm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         // init
         waitForStart();
         if (opModeIsActive()) {
@@ -78,15 +56,35 @@ public class MainV1 extends LinearOpMode {
                 chassisBL.setPower(chassisBLPower);
                 chassisFR.setPower(chassisFRPower);
                 chassisBR.setPower(chassisBRPower);
-                sliders.update(gamepad1.dpad_up, gamepad1.dpad_down);
-                if (gamepad1.right_stick_y > 0.1) {
-                    arm.setPower(taFF + gamepad1.right_stick_y);
-                } else if (gamepad1.right_stick_y < 0.1) {
-                    arm.setPower(gamepad1.right_stick_y);
+                // arm code
+                if (gamepad2.right_stick_y > DEADZONE) {
+                    arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    arm.setPower(clamp(gamepad2.right_stick_y + taFF));
+                    taCpos = arm.getCurrentPosition();
+                } else if (gamepad2.right_stick_y < DEADZONE) {
+                    arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    arm.setPower(clamp(gamepad2.right_stick_y));
+                    taCpos = arm.getCurrentPosition();
                 } else {
-                    double taFf = Math.cos(Math.toRadians(arm.getCurrentPosition()/CPR) + Math.cos(Math.toRadians(arm.getCurrentPosition()/CPR))) * taFF;
-                    arm.setPower(taFf);
+                    arm.setPower(taFF);
+                    arm.setTargetPosition(taCpos);
+                    arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 }
+                // sliders code
+                if (gamepad2.dpad_up) {
+                    extendArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    extendArm.setPower(eaSpeed + eaCpos);
+                    eaCpos = extendArm.getCurrentPosition();
+                } else if (gamepad2.dpad_down) {
+                    extendArm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                    extendArm.setPower(eaSpeed);
+                    eaCpos = extendArm.getCurrentPosition();
+                } else {
+                    extendArm.setPower(eaFF);
+                    extendArm.setTargetPosition(eaCpos);
+                    extendArm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                }
+                // claw code
                 if (gamepad1.right_bumper) {
                     clawL.setPower(1);
                     clawR.setPower(1);
@@ -98,8 +96,9 @@ public class MainV1 extends LinearOpMode {
                     clawR.setPower(0);
                 }
             }
-
-
         }
+    }
+    private double clamp(double val) {
+        return Math.max(-1, Math.min(1, val));
     }
 }
